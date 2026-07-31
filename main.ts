@@ -5,6 +5,30 @@ Deno.serve(async (req: Request) => {
   const url = new URL(req.url);
   const targetUrl = url.searchParams.get("url");
 
+  // TCP test endpoint
+  if (url.pathname === "/test-tcp") {
+    try {
+      const socket = await Deno.connect({ hostname: "httpbin.org", port: 443 });
+      const localAddr = socket.localAddr as Deno.NetAddr;
+      const remoteAddr = socket.remoteAddr as Deno.NetAddr;
+      await socket.close();
+
+      return jsonResponse({
+        status: "success",
+        message: "TCP connection works! ✅",
+        local: `${localAddr.hostname}:${localAddr.port}`,
+        remote: `${remoteAddr.hostname}:${remoteAddr.port}`,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err) {
+      return jsonResponse({
+        status: "error",
+        message: err.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
   // Health check
   if (!targetUrl || url.searchParams.has("health")) {
     return jsonResponse({
